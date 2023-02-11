@@ -15,6 +15,9 @@ public class DispatchCommandCheck implements MethodCheck {
         if (insnNode.name.equals("dispatchCommand") && insnNode.owner.equals("org/bukkit/Server")) {
             return new MethodCheckResult(Severity.HIGH, methodNode, classNode, "calls Server.dispatchCommand");
         }
+        if (insnNode.name.equals("performCommand") && insnNode.owner.equals("org/bukkit/entity/Player")) {
+            return new MethodCheckResult(Severity.HIGH, methodNode, classNode, "calls Player.performCommand");
+        }
         return null;
     }
 }
