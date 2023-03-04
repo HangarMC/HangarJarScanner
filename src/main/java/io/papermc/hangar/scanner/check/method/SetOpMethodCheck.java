@@ -10,7 +10,7 @@ public class SetOpMethodCheck implements MethodCheck {
 
     @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
-        if (insnNode.name.equals("setOp")) {
+        if (insnNode.name.equals("setOp") && (insnNode.owner.startsWith("org/bukkit"))) {
             return new MethodCheckResult(Severity.HIGHEST, methodNode, classNode, "found setOp call");
         }
         if (insnNode.name.endsWith("getOperators") && insnNode.owner.equals("org/bukkit/Server")) {
