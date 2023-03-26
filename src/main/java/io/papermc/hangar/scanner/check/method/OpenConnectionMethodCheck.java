@@ -24,4 +24,9 @@ public class OpenConnectionMethodCheck implements MethodCheck {
         }
         return null;
     }
+
+    @Override
+    public int updatedAt() {
+        return 1;
+    }
 }

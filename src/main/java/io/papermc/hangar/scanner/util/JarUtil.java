@@ -7,7 +7,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 // PluginDataService
-public class JarUtil {
+public final class JarUtil {
 
     public static Jar openJar(final String fileName, final InputStream file) throws IOException {
         if (fileName.endsWith(".jar")) {

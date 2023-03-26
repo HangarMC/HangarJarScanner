@@ -17,4 +17,9 @@ public class ClassLoaderMethodCheck implements MethodCheck {
         }
         return null;
     }
+
+    @Override
+    public int updatedAt() {
+        return 1;
+    }
 }

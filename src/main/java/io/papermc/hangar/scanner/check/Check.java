@@ -4,6 +4,13 @@ import io.papermc.hangar.scanner.model.Severity;
 
 public interface Check {
 
+    /**
+     * Returns the last internal scanner version the check was updated in.
+     *
+     * @return last internal scanner version the check was updated in
+     */
+    int updatedAt();
+
     interface CheckResult {
         String location();
 

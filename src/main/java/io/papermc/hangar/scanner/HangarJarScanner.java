@@ -26,6 +26,7 @@ import java.util.jar.JarEntry;
 
 public class HangarJarScanner {
 
+    private static final int VERSION = 1;
     private final List<MethodCheck> methodChecks = List.of(
             new ClassLoaderMethodCheck(),
             new OpenConnectionMethodCheck(),
@@ -39,7 +40,7 @@ public class HangarJarScanner {
             new TrollMethodCheck()
     );
 
-    public List<ScanResult> scanJar(InputStream stream, String name) throws IOException {
+    public List<ScanResult> scanJar(InputStream stream, String name) {
         List<ScanResult> result = new ArrayList<>();
         try (final Jar jar = JarUtil.openJar(name, stream)) {
             JarEntry jarEntry;
@@ -48,11 +49,13 @@ public class HangarJarScanner {
                 if (bytes.length < 4) {
                     continue;
                 }
+
                 String magic = String.format("%02X%02X%02X%02X", bytes[0], bytes[1], bytes[2], bytes[3]);
                 if (magic.equals("CAFEBABE")) { // class file magic
                     if (jarEntry.getName().endsWith(".jnilib")) {
                         continue; // meh
                     }
+
                     ScanResult scanResult = scanClazz(bytes, jarEntry.getName());
                     if (scanResult != null) {
                         result.add(scanResult);
@@ -134,6 +137,15 @@ public class HangarJarScanner {
                 yield null;
             }
         };
+    }
+
+    /**
+     * Returns the internal version of the scanner. Files should be rescanned if this version changes.
+     *
+     * @return the internal version of the scanner
+     */
+    public int version() {
+        return VERSION;
     }
 }
 

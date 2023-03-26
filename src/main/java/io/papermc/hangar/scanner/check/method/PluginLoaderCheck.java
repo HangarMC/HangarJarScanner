@@ -14,4 +14,9 @@ public class PluginLoaderCheck implements MethodCheck {
         }
         return null;
     }
+
+    @Override
+    public int updatedAt() {
+        return 1;
+    }
 }
