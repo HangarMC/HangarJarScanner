@@ -52,11 +52,11 @@
     <distributionManagement>
         <repository>
             <id>papermc-releases</id>
-            <url>https://papermc.io/repo/repository/maven-releases/</url>
+            <url>https://repo.papermc.io/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
             <id>papermc-snapshots</id>
-            <url>https://papermc.io/repo/repository/maven-snapshots/</url>
+            <url>https://repo.papermc.io/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
