@@ -5,24 +5,31 @@ import io.papermc.hangar.scanner.check.Check.ExceptionCheckResult;
 import io.papermc.hangar.scanner.check.Check.SimpleCheckResult;
 import io.papermc.hangar.scanner.check.MethodCheck;
 import io.papermc.hangar.scanner.check.MethodCheck.MethodCheckResult;
-import io.papermc.hangar.scanner.check.method.*;
+import io.papermc.hangar.scanner.check.method.ClassLoaderMethodCheck;
+import io.papermc.hangar.scanner.check.method.DispatchCommandCheck;
+import io.papermc.hangar.scanner.check.method.ExecMethodCheck;
+import io.papermc.hangar.scanner.check.method.OpenConnectionMethodCheck;
+import io.papermc.hangar.scanner.check.method.PluginLoaderCheck;
+import io.papermc.hangar.scanner.check.method.SetOpMethodCheck;
+import io.papermc.hangar.scanner.check.method.SocketMethodCheck;
+import io.papermc.hangar.scanner.check.method.StringEncryptionCheck;
+import io.papermc.hangar.scanner.check.method.ThreadSleepMethodCheck;
+import io.papermc.hangar.scanner.check.method.TrollMethodCheck;
 import io.papermc.hangar.scanner.model.Platform;
 import io.papermc.hangar.scanner.model.ScanResult;
 import io.papermc.hangar.scanner.model.Severity;
 import io.papermc.hangar.scanner.util.JarUtil;
 import io.papermc.hangar.scanner.util.JarUtil.Jar;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarEntry;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.jar.JarEntry;
 
 public class HangarJarScanner {
 
@@ -40,8 +47,9 @@ public class HangarJarScanner {
             new TrollMethodCheck()
     );
 
-    public List<ScanResult> scanJar(InputStream stream, String name) {
-        List<ScanResult> result = new ArrayList<>();
+    public ScanResult scanJar(InputStream stream, String name) {
+        List<CheckResult> checkResults = new ArrayList<>();
+        Severity highestSeverity = Severity.UNKNOWN;
         try (final Jar jar = JarUtil.openJar(name, stream)) {
             JarEntry jarEntry;
             while ((jarEntry = jar.stream().getNextJarEntry()) != null) {
@@ -56,26 +64,36 @@ public class HangarJarScanner {
                         continue; // meh
                     }
 
-                    ScanResult scanResult = scanClazz(bytes, jarEntry.getName());
-                    if (scanResult != null) {
-                        result.add(scanResult);
+                    List<CheckResult> scanResult = scanClazz(bytes, jarEntry.getName());
+                    if (!scanResult.isEmpty()) {
+                        checkResults.addAll(scanResult);
+
+                        // Set highest severity
+                        for (CheckResult result : scanResult) {
+                            if (result.severity().compareTo(highestSeverity) < 0) {
+                                highestSeverity = result.severity();
+                            }
+                        }
                     }
                     if (!jarEntry.getName().endsWith(".class")) {
-                        result.add(new ScanResult(null, List.of(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), "disguised class file, starts with 0xCAFEBABE"))));
+                        checkResults.add(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), "disguised class file, starts with 0xCAFEBABE"));
+                        highestSeverity = Severity.HIGHEST;
                     }
                 } else if (jarEntry.getName().endsWith(".class")) {
-                    result.add(new ScanResult(null, List.of(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), ".class file without 0xCAFEBABE"))));
+                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), ".class file without 0xCAFEBABE"));
+                    highestSeverity = Severity.HIGHEST;
                 } else if (magic.startsWith("7F454C")) { // ELF magic
-                    result.add(new ScanResult(null, List.of(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), "disguised linux executable binary file, starts with 0x7F454C (ELF)"))));
+                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), "disguised linux executable binary file, starts with 0x7F454C (ELF)"));
+                    highestSeverity = Severity.HIGHEST;
                 }
             }
         } catch (Exception ex) {
-            result.add(new ScanResult(null, List.of(new ExceptionCheckResult(Severity.HIGHEST, name, "Crashes while scanning with " + ex.getClass().getName() + ": " + ex.getMessage(), ex))));
+            checkResults.add(new ExceptionCheckResult(Severity.HIGHEST, name, "Crashes while scanning with " + ex.getClass().getName() + ": " + ex.getMessage(), ex));
         }
-        return result;
+        return new ScanResult(highestSeverity, checkResults);
     }
 
-    public ScanResult scanClazz(byte[] bytes, String name) {
+    public List<CheckResult> scanClazz(byte[] bytes, String name) {
         ClassReader cr = new ClassReader(bytes);
         ClassNode cn = new ClassNode();
         try {
@@ -87,18 +105,12 @@ public class HangarJarScanner {
         return scan(cn);
     }
 
-    private ScanResult scan(ClassNode classNode) {
-        Platform platform = checkClassForPlatform(classNode);
+    private List<CheckResult> scan(ClassNode classNode) {
         List<CheckResult> checkResults = new ArrayList<>();
         for (MethodNode method : classNode.methods) {
             checkResults.addAll(scan(method, classNode));
         }
-
-        if (platform != null || !checkResults.isEmpty()) {
-            return new ScanResult(platform, checkResults);
-        } else {
-            return null;
-        }
+        return checkResults;
     }
 
     private List<CheckResult> scan(MethodNode methodNode, ClassNode classNode) {
