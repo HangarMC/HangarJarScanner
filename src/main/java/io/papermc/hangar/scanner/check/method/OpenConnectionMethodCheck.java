@@ -21,6 +21,8 @@ public class OpenConnectionMethodCheck implements MethodCheck {
         } else if (insnNode.name.equals("send") && insnNode.owner.equals("java/net/http/HttpClient")) {
             // jdk http client
             return new MethodCheckResult(Severity.LOW, methodNode, classNode, "found open connection (jdk http) call");
+        } else if (insnNode.name.equals("<init>") && insnNode.owner.equals("java/net/InetSocketAddress")) {
+            return new MethodCheckResult(Severity.HIGH, methodNode, classNode, "defines a socket to connect to a server");
         }
         return null;
     }
