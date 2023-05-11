@@ -8,6 +8,7 @@ import io.papermc.hangar.scanner.check.MethodCheck.MethodCheckResult;
 import io.papermc.hangar.scanner.check.method.ClassLoaderMethodCheck;
 import io.papermc.hangar.scanner.check.method.DispatchCommandCheck;
 import io.papermc.hangar.scanner.check.method.ExecMethodCheck;
+import io.papermc.hangar.scanner.check.method.InetSocketMethodCheck;
 import io.papermc.hangar.scanner.check.method.OpenConnectionMethodCheck;
 import io.papermc.hangar.scanner.check.method.PluginLoaderCheck;
 import io.papermc.hangar.scanner.check.method.SetOpMethodCheck;
@@ -15,6 +16,7 @@ import io.papermc.hangar.scanner.check.method.SocketMethodCheck;
 import io.papermc.hangar.scanner.check.method.StringEncryptionCheck;
 import io.papermc.hangar.scanner.check.method.ThreadSleepMethodCheck;
 import io.papermc.hangar.scanner.check.method.TrollMethodCheck;
+import io.papermc.hangar.scanner.check.method.UrlMethodCheck;
 import io.papermc.hangar.scanner.model.Platform;
 import io.papermc.hangar.scanner.model.ScanResult;
 import io.papermc.hangar.scanner.model.Severity;
@@ -41,6 +43,8 @@ public class HangarJarScanner {
             new ThreadSleepMethodCheck(),
             new PluginLoaderCheck(),
             new SocketMethodCheck(),
+            new InetSocketMethodCheck(),
+            new UrlMethodCheck(),
             new StringEncryptionCheck(),
             new DispatchCommandCheck(),
             new ExecMethodCheck(),
