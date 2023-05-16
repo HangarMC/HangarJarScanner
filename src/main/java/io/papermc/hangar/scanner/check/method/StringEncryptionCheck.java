@@ -12,6 +12,9 @@ public class StringEncryptionCheck implements MethodCheck {
         if (insnNode.name.equals("init") && insnNode.owner.equals("javax/crypto/Cipher")) {
             return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "calls Cipher.init, an indicator for String Encryption");
         }
+        if (insnNode.name.equals("getInstance") && insnNode.owner.equals("javax/crypto/Cipher")) {
+            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "calls Cipher.getInstance, an indicator for String Encryption");
+        }
         return null;
     }
 
