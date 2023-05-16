@@ -20,17 +20,16 @@ import io.papermc.hangar.scanner.model.ScanResult;
 import io.papermc.hangar.scanner.model.Severity;
 import io.papermc.hangar.scanner.util.JarUtil;
 import io.papermc.hangar.scanner.util.JarUtil.Jar;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarEntry;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.jar.JarEntry;
 
 public class HangarJarScanner {
 
