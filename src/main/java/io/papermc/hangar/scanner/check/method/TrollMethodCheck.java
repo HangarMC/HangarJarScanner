@@ -10,7 +10,7 @@ public class TrollMethodCheck implements MethodCheck {
     @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("<init>") && insnNode.owner.endsWith("PacketPlayOutExplosion")) {
-            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "creates fake explosion packet than can potentially be used to crash players");
+            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "creates fake explosion packet that can potentially be used to crash players");
         }
         return null;
     }
