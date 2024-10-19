@@ -21,7 +21,7 @@
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 
         <!-- dependencies -->
-        <asm.version>9.7</asm.version>
+        <asm.version>9.7.1</asm.version>
 
         <!-- test -->
         <junit.version>5.10.3</junit.version>
