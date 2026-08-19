@@ -22,14 +22,14 @@ class BigSyntheticBridgeMethodCheckTest {
         ClassNode classNode = new ClassNode();
         classNode.name = "example/Test";
         classNode.methods = new ArrayList<>();
-        classNode.methods.add(createMethod(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE, "bridgeMethod", 33));
+        classNode.methods.add(createMethod(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE, "bridgeMethod", 150));
 
         ClassCheckResult result = check.check(classNode);
 
         assertNotNull(result);
-        assertEquals(Severity.HIGH, result.severity());
+        assertEquals(Severity.HIGHEST, result.severity());
         assertEquals(check.name(), result.name());
-        assertEquals("contains a synthetic/bridge method bridgeMethod()V with 33 instructions", result.message());
+        assertEquals("contains a synthetic/bridge method bridgeMethod()V with 150 instructions", result.message());
     }
 
     @Test
