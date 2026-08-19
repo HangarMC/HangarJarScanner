@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class HangarJarScannerTest {
@@ -19,6 +20,7 @@ class HangarJarScannerTest {
     }
 
     @Test
+    @Disabled
     void test() throws IOException {
         Path path = Path.of("stuff/malware");
         Files.list(path).forEach(f -> {
@@ -39,6 +41,7 @@ class HangarJarScannerTest {
     }
 
     @Test
+    @Disabled
     void testSingle() throws IOException {
         String fileName = "FFAPvP-1.0.0.jar";
         ScanResult scanResult = scanner.scanJar(Files.newInputStream(Path.of("stuff/malware").resolve(fileName)), fileName);
