@@ -8,9 +8,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class SocketMethodCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "Socket";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("<init>") && insnNode.owner.equals("java/net/Socket")) {
-            return new MethodCheckResult(Severity.HIGH, methodNode, classNode, "opens Socket");
+            return new MethodCheckResult(Severity.HIGH, name(), methodNode, classNode, "opens Socket");
         }
         return null;
     }

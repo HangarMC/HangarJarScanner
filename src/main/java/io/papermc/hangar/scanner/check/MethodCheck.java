@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.MethodNode;
 public interface MethodCheck extends Check {
     MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode);
 
-    record MethodCheckResult(Severity severity, MethodNode methodNode, ClassNode classNode, String message) implements CheckResult {
+    record MethodCheckResult(Severity severity, String name, MethodNode methodNode, ClassNode classNode, String message) implements CheckResult {
 
         @Override
         public String location() {

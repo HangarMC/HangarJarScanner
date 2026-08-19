@@ -9,12 +9,17 @@ import org.objectweb.asm.tree.MethodNode;
 public class SetOpMethodCheck implements MethodCheck {
 
     @Override
+    public String name() {
+        return "Set op";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("setOp") && (insnNode.owner.startsWith("org/bukkit"))) {
-            return new MethodCheckResult(Severity.HIGHEST, methodNode, classNode, "found setOp call");
+            return new MethodCheckResult(Severity.HIGHEST, name(), methodNode, classNode, "found setOp call");
         }
         if (insnNode.name.endsWith("getOperators") && insnNode.owner.equals("org/bukkit/Server")) {
-            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "found getOperators call");
+            return new MethodCheckResult(Severity.MEDIUM, name(), methodNode, classNode, "found getOperators call");
         }
         return null;
     }

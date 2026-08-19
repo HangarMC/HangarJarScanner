@@ -8,9 +8,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class StringEncryptionCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "String encryption";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("init") && insnNode.owner.equals("javax/crypto/Cipher")) {
-            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "calls Cipher.init, an indicator for String Encryption");
+            return new MethodCheckResult(Severity.MEDIUM, name(), methodNode, classNode, "calls Cipher.init, an indicator for String Encryption");
         }
         return null;
     }

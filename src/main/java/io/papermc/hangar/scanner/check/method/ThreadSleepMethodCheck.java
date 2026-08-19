@@ -8,9 +8,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class ThreadSleepMethodCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "Thread sleep";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("sleep") && insnNode.owner.equals("java/lang/Thread") && insnNode.desc.equals("(J)V")) {
-            return new MethodCheckResult(Severity.LOW, methodNode, classNode, "found Thread.sleep call");
+            return new MethodCheckResult(Severity.LOW, name(), methodNode, classNode, "found Thread.sleep call");
         }
         return null;
     }

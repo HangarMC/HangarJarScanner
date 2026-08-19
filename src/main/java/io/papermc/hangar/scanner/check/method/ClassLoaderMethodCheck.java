@@ -8,12 +8,17 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class ClassLoaderMethodCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "Class loader method";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("<init>") && insnNode.owner.equals("java/net/URLClassLoader")) {
-            return new MethodCheckResult(Severity.HIGH, methodNode, classNode, "creates new URLClassLoader");
+            return new MethodCheckResult(Severity.HIGH, name(), methodNode, classNode, "creates new URLClassLoader");
         }
         if (insnNode.name.equals("forName") && insnNode.owner.equals("java/lang/Class")) {
-            return new MethodCheckResult(Severity.LOW, methodNode, classNode, "calls Class.forName");
+            return new MethodCheckResult(Severity.LOW, name(), methodNode, classNode, "calls Class.forName");
         }
         return null;
     }

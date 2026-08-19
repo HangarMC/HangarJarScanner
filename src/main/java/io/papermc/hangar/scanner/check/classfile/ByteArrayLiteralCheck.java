@@ -12,10 +12,15 @@ import org.objectweb.asm.tree.MethodNode;
 public class ByteArrayLiteralCheck implements ClassCheck {
 
     @Override
+    public String name() {
+        return "Byte array literal";
+    }
+
+    @Override
     public ClassCheckResult check(ClassNode classNode) {
         for (MethodNode methodNode : classNode.methods) {
             if (containsByteArrayLiteral(methodNode)) {
-                return new ClassCheckResult(Severity.MEDIUM, classNode, "creates byte array literal in " + methodNode.name);
+                return new ClassCheckResult(Severity.MEDIUM, name(), classNode, "creates byte array literal in " + methodNode.name);
             }
         }
         return null;

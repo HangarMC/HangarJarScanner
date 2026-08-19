@@ -8,9 +8,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class ExecMethodCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "Exec method";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("exec") && insnNode.owner.equals("java/lang/Runtime")) {
-            return new MethodCheckResult(Severity.HIGHEST, methodNode, classNode, "calls Runtime.exec");
+            return new MethodCheckResult(Severity.HIGHEST, name(), methodNode, classNode, "calls Runtime.exec");
         }
         return null;
     }

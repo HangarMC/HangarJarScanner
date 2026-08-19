@@ -8,9 +8,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class TrollMethodCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "Troll";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (insnNode.name.equals("<init>") && insnNode.owner.endsWith("PacketPlayOutExplosion")) {
-            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "creates fake explosion packet that can potentially be used to crash players");
+            return new MethodCheckResult(Severity.MEDIUM, name(), methodNode, classNode, "creates fake explosion packet that can potentially be used to crash players");
         }
         return null;
     }

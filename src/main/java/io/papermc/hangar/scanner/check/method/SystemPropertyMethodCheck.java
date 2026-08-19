@@ -9,11 +9,16 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class SystemPropertyMethodCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "System property";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if (isSystemSetProperty(insnNode)) {
-            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "calls System.setProperty");
+            return new MethodCheckResult(Severity.MEDIUM, name(), methodNode, classNode, "calls System.setProperty");
         } else if (isPutCall(insnNode) && hasRecentGetPropertiesCall(insnNode)) {
-            return new MethodCheckResult(Severity.MEDIUM, methodNode, classNode, "calls System.getProperties().put/putAll");
+            return new MethodCheckResult(Severity.MEDIUM, name(), methodNode, classNode, "calls System.getProperties().put/putAll");
         }
 
         return null;

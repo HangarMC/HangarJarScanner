@@ -24,6 +24,7 @@ class RuntimeMethodCheckTest {
 
         assertNotNull(result);
         assertEquals(Severity.MEDIUM, result.severity());
+        assertEquals(check.name(), result.name());
         assertEquals("calls ManagementFactory.getRuntimeMXBean", result.message());
     }
 
@@ -37,6 +38,7 @@ class RuntimeMethodCheckTest {
 
         assertNotNull(result);
         assertEquals(Severity.MEDIUM, result.severity());
+        assertEquals(check.name(), result.name());
         assertEquals("calls Runtime.getRuntime", result.message());
     }
 }

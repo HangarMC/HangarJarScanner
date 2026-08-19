@@ -8,9 +8,14 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class PluginLoaderCheck implements MethodCheck {
     @Override
+    public String name() {
+        return "Plugin loader";
+    }
+
+    @Override
     public MethodCheckResult check(MethodInsnNode insnNode, MethodNode methodNode, ClassNode classNode) {
         if ((insnNode.name.equals("loadPlugin") || insnNode.name.equals("enablePlugin")) && insnNode.owner.equals("org/bukkit/plugin/PluginManager")) {
-           return new MethodCheckResult(Severity.HIGH, methodNode, classNode, "calls PluginManager." + insnNode.name);
+           return new MethodCheckResult(Severity.HIGH, name(), methodNode, classNode, "calls PluginManager." + insnNode.name);
         }
         return null;
     }

@@ -78,19 +78,19 @@ public class HangarJarScanner {
                         }
                     }
                     if (!jarEntry.getName().endsWith(".class")) {
-                        checkResults.add(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), "disguised class file, starts with 0xCAFEBABE"));
+                        checkResults.add(new SimpleCheckResult(Severity.HIGHEST, "Scanner", jarEntry.getName(), "disguised class file, starts with 0xCAFEBABE"));
                         highestSeverity = Severity.HIGHEST;
                     }
                 } else if (jarEntry.getName().endsWith(".class")) {
-                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), ".class file without 0xCAFEBABE"));
+                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, "Scanner", jarEntry.getName(), ".class file without 0xCAFEBABE"));
                     highestSeverity = Severity.HIGHEST;
                 } else if (magic.startsWith("7F454C")) { // ELF magic
-                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, jarEntry.getName(), "disguised linux executable binary file, starts with 0x7F454C (ELF)"));
+                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, "Scanner", jarEntry.getName(), "disguised linux executable binary file, starts with 0x7F454C (ELF)"));
                     highestSeverity = Severity.HIGHEST;
                 }
             }
         } catch (Exception ex) {
-            checkResults.add(new ExceptionCheckResult(Severity.HIGHEST, name, "Crashes while scanning with " + ex.getClass().getName() + ": " + ex.getMessage(), ex));
+            checkResults.add(new ExceptionCheckResult(Severity.HIGHEST, "Scanner", name, "Crashes while scanning with " + ex.getClass().getName() + ": " + ex.getMessage(), ex));
         }
         return new ScanResult(highestSeverity, checkResults);
     }
@@ -112,7 +112,7 @@ public class HangarJarScanner {
         for (ClassCheck classCheck : classChecks) {
             ClassCheckResult result = classCheck.check(classNode);
             if (result != null) {
-                checkResults.add(result);
+                checkResults.add(new ClassCheckResult(result.severity(), classCheck.name(), classNode, result.message()));
             }
         }
         for (MethodNode method : classNode.methods) {
@@ -128,7 +128,7 @@ public class HangarJarScanner {
                 for (MethodCheck methodCheck : methodChecks) {
                     MethodCheckResult result = methodCheck.check(methodInsnNode, methodNode, classNode);
                     if (result != null) {
-                        checkResults.add(result);
+                        checkResults.add(new MethodCheckResult(result.severity(), methodCheck.name(), methodNode, classNode, result.message()));
                     }
                 }
             }
