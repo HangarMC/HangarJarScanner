@@ -40,7 +40,7 @@ class HangarJarScannerTest {
 
     @Test
     void testSingle() throws IOException {
-        String fileName = "";
+        String fileName = "FFAPvP-1.0.0.jar";
         ScanResult scanResult = scanner.scanJar(Files.newInputStream(Path.of("stuff/malware").resolve(fileName)), fileName);
         System.out.println();
         if (!scanResult.results().isEmpty()) {

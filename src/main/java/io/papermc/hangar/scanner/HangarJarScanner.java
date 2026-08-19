@@ -3,18 +3,13 @@ package io.papermc.hangar.scanner;
 import io.papermc.hangar.scanner.check.Check.CheckResult;
 import io.papermc.hangar.scanner.check.Check.ExceptionCheckResult;
 import io.papermc.hangar.scanner.check.Check.SimpleCheckResult;
+import io.papermc.hangar.scanner.check.ClassCheck;
+import io.papermc.hangar.scanner.check.ClassCheck.ClassCheckResult;
 import io.papermc.hangar.scanner.check.MethodCheck;
 import io.papermc.hangar.scanner.check.MethodCheck.MethodCheckResult;
-import io.papermc.hangar.scanner.check.method.ClassLoaderMethodCheck;
-import io.papermc.hangar.scanner.check.method.DispatchCommandCheck;
-import io.papermc.hangar.scanner.check.method.ExecMethodCheck;
-import io.papermc.hangar.scanner.check.method.OpenConnectionMethodCheck;
-import io.papermc.hangar.scanner.check.method.PluginLoaderCheck;
-import io.papermc.hangar.scanner.check.method.SetOpMethodCheck;
-import io.papermc.hangar.scanner.check.method.SocketMethodCheck;
-import io.papermc.hangar.scanner.check.method.StringEncryptionCheck;
-import io.papermc.hangar.scanner.check.method.ThreadSleepMethodCheck;
-import io.papermc.hangar.scanner.check.method.TrollMethodCheck;
+import io.papermc.hangar.scanner.check.classfile.ByteArrayLiteralCheck;
+import io.papermc.hangar.scanner.check.classfile.StringLiteralSubstringCheck;
+import io.papermc.hangar.scanner.check.method.*;
 import io.papermc.hangar.scanner.model.Platform;
 import io.papermc.hangar.scanner.model.ScanResult;
 import io.papermc.hangar.scanner.model.Severity;
@@ -22,18 +17,21 @@ import io.papermc.hangar.scanner.util.JarUtil;
 import io.papermc.hangar.scanner.util.JarUtil.Jar;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 
 public class HangarJarScanner {
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 3;
+
+    private final List<ClassCheck> classChecks = List.of(
+            new ByteArrayLiteralCheck(),
+            new StringLiteralSubstringCheck()
+    );
     private final List<MethodCheck> methodChecks = List.of(
             new ClassLoaderMethodCheck(),
             new OpenConnectionMethodCheck(),
@@ -44,7 +42,11 @@ public class HangarJarScanner {
             new StringEncryptionCheck(),
             new DispatchCommandCheck(),
             new ExecMethodCheck(),
-            new TrollMethodCheck()
+            new RuntimeMethodCheck(),
+            new TrollMethodCheck(),
+            new JarFuckeryCheck(),
+            new BannedWordMethodCheck(),
+            new SystemPropertyMethodCheck()
     );
 
     public ScanResult scanJar(InputStream stream, String name) {
@@ -64,7 +66,7 @@ public class HangarJarScanner {
                         continue; // meh
                     }
 
-                    List<CheckResult> scanResult = scanClazz(bytes, jarEntry.getName());
+                    Set<CheckResult> scanResult = scanClazz(bytes, jarEntry.getName());
                     if (!scanResult.isEmpty()) {
                         checkResults.addAll(scanResult);
 
@@ -93,7 +95,7 @@ public class HangarJarScanner {
         return new ScanResult(highestSeverity, checkResults);
     }
 
-    public List<CheckResult> scanClazz(byte[] bytes, String name) {
+    public Set<CheckResult> scanClazz(byte[] bytes, String name) {
         ClassReader cr = new ClassReader(bytes);
         ClassNode cn = new ClassNode();
         try {
@@ -105,16 +107,22 @@ public class HangarJarScanner {
         return scan(cn);
     }
 
-    private List<CheckResult> scan(ClassNode classNode) {
-        List<CheckResult> checkResults = new ArrayList<>();
+    private Set<CheckResult> scan(ClassNode classNode) {
+        Set<CheckResult> checkResults = new LinkedHashSet<>();
+        for (ClassCheck classCheck : classChecks) {
+            ClassCheckResult result = classCheck.check(classNode);
+            if (result != null) {
+                checkResults.add(result);
+            }
+        }
         for (MethodNode method : classNode.methods) {
             checkResults.addAll(scan(method, classNode));
         }
         return checkResults;
     }
 
-    private List<CheckResult> scan(MethodNode methodNode, ClassNode classNode) {
-        List<CheckResult> checkResults = new ArrayList<>();
+    private Set<CheckResult> scan(MethodNode methodNode, ClassNode classNode) {
+        Set<CheckResult> checkResults = new LinkedHashSet<>();
         for (AbstractInsnNode instruction : methodNode.instructions) {
             if (instruction instanceof MethodInsnNode methodInsnNode) {
                 for (MethodCheck methodCheck : methodChecks) {
@@ -160,4 +168,3 @@ public class HangarJarScanner {
         return VERSION;
     }
 }
-
