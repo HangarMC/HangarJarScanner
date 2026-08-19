@@ -8,6 +8,7 @@ import io.papermc.hangar.scanner.check.ClassCheck.ClassCheckResult;
 import io.papermc.hangar.scanner.check.MethodCheck;
 import io.papermc.hangar.scanner.check.MethodCheck.MethodCheckResult;
 import io.papermc.hangar.scanner.check.classfile.ByteArrayLiteralCheck;
+import io.papermc.hangar.scanner.check.classfile.BigSyntheticBridgeMethodCheck;
 import io.papermc.hangar.scanner.check.classfile.StringLiteralSubstringCheck;
 import io.papermc.hangar.scanner.check.method.*;
 import io.papermc.hangar.scanner.model.Platform;
@@ -30,7 +31,8 @@ public class HangarJarScanner {
 
     private final List<ClassCheck> classChecks = List.of(
             new ByteArrayLiteralCheck(),
-            new StringLiteralSubstringCheck()
+            new StringLiteralSubstringCheck(),
+            new BigSyntheticBridgeMethodCheck()
     );
     private final List<MethodCheck> methodChecks = List.of(
             new ClassLoaderMethodCheck(),
