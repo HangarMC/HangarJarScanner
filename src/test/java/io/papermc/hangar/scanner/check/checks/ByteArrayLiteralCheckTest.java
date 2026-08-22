@@ -1,5 +1,6 @@
-package io.papermc.hangar.scanner.check.classfile;
+package io.papermc.hangar.scanner.check.checks;
 
+import io.papermc.hangar.scanner.check.CheckContext;
 import java.io.IOException;
 import java.io.InputStream;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,14 +15,14 @@ class ByteArrayLiteralCheckTest {
 
     @Test
     void flagsByteArrayLiteral() throws IOException {
-        var scanResult = scanner.scanClazz(readClassBytes(ByteArrayLiteralSample.class), ByteArrayLiteralSample.class.getName());
+        var scanResult = scanner.scanClazz(new CheckContext(), readClassBytes(ByteArrayLiteralSample.class), ByteArrayLiteralSample.class.getName());
 
         assertTrue(scanResult.stream().anyMatch(result -> result.message().startsWith("creates byte array literal")));
     }
 
     @Test
     void doesNotFlagSizedByteArrayAllocation() throws IOException {
-        var scanResult = scanner.scanClazz(readClassBytes(SizedByteArraySample.class), SizedByteArraySample.class.getName());
+        var scanResult = scanner.scanClazz(new CheckContext(), readClassBytes(SizedByteArraySample.class), SizedByteArraySample.class.getName());
 
         assertFalse(scanResult.stream().anyMatch(result -> result.message().startsWith("creates byte array literal")));
     }

@@ -1,6 +1,6 @@
 package io.papermc.hangar.scanner;
 
-import io.papermc.hangar.scanner.check.Check;
+import io.papermc.hangar.scanner.check.CheckResult;
 import io.papermc.hangar.scanner.model.ScanResult;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +28,7 @@ class HangarJarScannerTest {
                 System.out.println("#-- " + f.getFileName() + " --#");
                 ScanResult scanResult = scanner.scanJar(Files.newInputStream(f), f.getFileName().toString());
                 if (!scanResult.results().isEmpty()) {
-                    String checks = scanResult.results().stream().map(Check.CheckResult::format).collect(Collectors.joining("\n"));
+                    String checks = scanResult.results().stream().map(CheckResult::format).sorted().collect(Collectors.joining("\n"));
                     System.out.println(checks);
                 } else {
                     System.out.println("no matches for " + f.getFileName());
@@ -47,7 +47,7 @@ class HangarJarScannerTest {
         ScanResult scanResult = scanner.scanJar(Files.newInputStream(Path.of("stuff/malware").resolve(fileName)), fileName);
         System.out.println();
         if (!scanResult.results().isEmpty()) {
-            String checks = scanResult.results().stream().map(Check.CheckResult::format).collect(Collectors.joining("\n"));
+            String checks = scanResult.results().stream().map(CheckResult::format).sorted().collect(Collectors.joining("\n"));
             System.out.println(checks);
         }
     }

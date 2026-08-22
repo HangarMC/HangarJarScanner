@@ -1,6 +1,10 @@
 package io.papermc.hangar.scanner.check;
 
 import io.papermc.hangar.scanner.model.Severity;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 public interface Check {
 
@@ -13,25 +17,35 @@ public interface Check {
      */
     int updatedAt();
 
-    interface CheckResult {
-        String name();
-
-        String location();
-
-        String message();
-
-        Severity severity();
-
-        default String format() {
-            return "[" + severity().name() + "]: [" + name() + "]: " + message() + " at " + location();
-        }
+    default CheckResult.Class checkClass(CheckContext context, ClassNode classNode) {
+        return null;
     }
 
-    record SimpleCheckResult(Severity severity, String name, String location, String message) implements CheckResult {
-
+    default CheckResult.Field checkField(CheckContext context, FieldNode fieldNode) {
+        return null;
     }
 
-    record ExceptionCheckResult(Severity severity, String name, String location, String message, Exception exception) implements CheckResult {
+    default CheckResult.Method checkMethod(CheckContext context, MethodNode methodNode)  {
+        return null;
+    }
 
+    default CheckResult checkMethodCall(CheckContext context, MethodInsnNode methodInsnNode) {
+        return null;
+    }
+
+    default CheckResult.Class classResult(CheckContext context, Severity severity, String message) {
+        return new CheckResult.Class(severity, name(), updatedAt(), context.getClassNode(), message);
+    }
+
+    default CheckResult.Field fieldResult(CheckContext context, Severity severity, String message) {
+        return new CheckResult.Field(severity, name(), updatedAt(), context.getClassNode(), context.getFieldNode(), message);
+    }
+
+    default CheckResult.Method methodResult(CheckContext context, Severity severity, String message) {
+        return new CheckResult.Method(severity, name(), updatedAt(), context.getClassNode(), context.getMethodNode(), message);
+    }
+
+    default CheckResult.MethodCall methodCallResult(CheckContext context, Severity severity, String message) {
+        return new CheckResult.MethodCall(severity, name(), updatedAt(), context.getClassNode(), context.getMethodNode(), context.getMethodCallNode(), message);
     }
 }

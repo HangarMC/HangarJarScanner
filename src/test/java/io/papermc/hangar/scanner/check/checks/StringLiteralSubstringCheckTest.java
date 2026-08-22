@@ -1,5 +1,6 @@
-package io.papermc.hangar.scanner.check.classfile;
+package io.papermc.hangar.scanner.check.checks;
 
+import io.papermc.hangar.scanner.check.CheckContext;
 import java.io.IOException;
 import java.io.InputStream;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,21 +15,21 @@ class StringLiteralSubstringCheckTest {
 
     @Test
     void flagsStringLiteralSubstring() throws IOException {
-        var scanResult = scanner.scanClazz(readClassBytes(StringLiteralSubstringSample.class), StringLiteralSubstringSample.class.getName());
+        var scanResult = scanner.scanClazz(new CheckContext(), readClassBytes(StringLiteralSubstringSample.class), StringLiteralSubstringSample.class.getName());
 
         assertTrue(scanResult.stream().anyMatch(result -> result.message().startsWith("contains banned string literal substring 'notme'")));
     }
 
     @Test
     void doesNotFlagOtherStringLiterals() throws IOException {
-        var scanResult = scanner.scanClazz(readClassBytes(OtherStringLiteralSample.class), OtherStringLiteralSample.class.getName());
+        var scanResult = scanner.scanClazz(new CheckContext(), readClassBytes(OtherStringLiteralSample.class), OtherStringLiteralSample.class.getName());
 
         assertFalse(scanResult.stream().anyMatch(result -> result.message().startsWith("contains banned string literal substring 'notme'")));
     }
 
     @Test
     void flagsStringLiteralFieldInitializer() throws IOException {
-        var scanResult = scanner.scanClazz(readClassBytes(StringLiteralFieldSample.class), StringLiteralFieldSample.class.getName());
+        var scanResult = scanner.scanClazz(new CheckContext(), readClassBytes(StringLiteralFieldSample.class), StringLiteralFieldSample.class.getName());
 
         assertTrue(scanResult.stream().anyMatch(result -> result.message().startsWith("contains banned string literal substring 'notme'")));
     }

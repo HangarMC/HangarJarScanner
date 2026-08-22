@@ -1,59 +1,24 @@
 package io.papermc.hangar.scanner;
 
-import io.papermc.hangar.scanner.check.Check.CheckResult;
-import io.papermc.hangar.scanner.check.Check.ExceptionCheckResult;
-import io.papermc.hangar.scanner.check.Check.SimpleCheckResult;
-import io.papermc.hangar.scanner.check.ClassCheck;
-import io.papermc.hangar.scanner.check.ClassCheck.ClassCheckResult;
-import io.papermc.hangar.scanner.check.MethodCheck;
-import io.papermc.hangar.scanner.check.MethodCheck.MethodCheckResult;
-import io.papermc.hangar.scanner.check.classfile.ByteArrayLiteralCheck;
-import io.papermc.hangar.scanner.check.classfile.BigSyntheticBridgeMethodCheck;
-import io.papermc.hangar.scanner.check.classfile.StringLiteralSubstringCheck;
-import io.papermc.hangar.scanner.check.method.*;
-import io.papermc.hangar.scanner.model.Platform;
+import io.papermc.hangar.scanner.check.*;
 import io.papermc.hangar.scanner.model.ScanResult;
 import io.papermc.hangar.scanner.model.Severity;
 import io.papermc.hangar.scanner.util.JarUtil;
 import io.papermc.hangar.scanner.util.JarUtil.Jar;
+
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.*;
 
 public class HangarJarScanner {
 
-    private static final int VERSION = 3;
-
-    private final List<ClassCheck> classChecks = List.of(
-            new ByteArrayLiteralCheck(),
-            new StringLiteralSubstringCheck(),
-            new BigSyntheticBridgeMethodCheck()
-    );
-    private final List<MethodCheck> methodChecks = List.of(
-            new ClassLoaderMethodCheck(),
-            new OpenConnectionMethodCheck(),
-            new SetOpMethodCheck(),
-            new ThreadSleepMethodCheck(),
-            new PluginLoaderCheck(),
-            new SocketMethodCheck(),
-            new StringEncryptionCheck(),
-            new DispatchCommandCheck(),
-            new ExecMethodCheck(),
-            new RuntimeMethodCheck(),
-            new TrollMethodCheck(),
-            new JarFuckeryCheck(),
-            new BannedWordMethodCheck(),
-            new SystemPropertyMethodCheck()
-    );
-
     public ScanResult scanJar(InputStream stream, String name) {
-        List<CheckResult> checkResults = new ArrayList<>();
-        Severity highestSeverity = Severity.UNKNOWN;
+        Set<CheckResult> checkResults = new LinkedHashSet<>();
+        CheckContext context = new CheckContext();
         try (final Jar jar = JarUtil.openJar(name, stream)) {
             JarEntry jarEntry;
             while ((jarEntry = jar.stream().getNextJarEntry()) != null) {
@@ -68,97 +33,71 @@ public class HangarJarScanner {
                         continue; // meh
                     }
 
-                    Set<CheckResult> scanResult = scanClazz(bytes, jarEntry.getName());
-                    if (!scanResult.isEmpty()) {
-                        checkResults.addAll(scanResult);
+                    checkResults.addAll(scanClazz(context, bytes, jarEntry.getName()));
 
-                        // Set highest severity
-                        for (CheckResult result : scanResult) {
-                            if (result.severity().compareTo(highestSeverity) < 0) {
-                                highestSeverity = result.severity();
-                            }
-                        }
-                    }
                     if (!jarEntry.getName().endsWith(".class")) {
-                        checkResults.add(new SimpleCheckResult(Severity.HIGHEST, "Scanner", jarEntry.getName(), "disguised class file, starts with 0xCAFEBABE"));
-                        highestSeverity = Severity.HIGHEST;
+                        checkResults.add(scannerResult(context, jarEntry.getName(), "disguised class file, starts with 0xCAFEBABE"));
                     }
                 } else if (jarEntry.getName().endsWith(".class")) {
-                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, "Scanner", jarEntry.getName(), ".class file without 0xCAFEBABE"));
-                    highestSeverity = Severity.HIGHEST;
+                    checkResults.add(scannerResult(context, jarEntry.getName(), ".class file without 0xCAFEBABE"));
                 } else if (magic.startsWith("7F454C")) { // ELF magic
-                    checkResults.add(new SimpleCheckResult(Severity.HIGHEST, "Scanner", jarEntry.getName(), "disguised linux executable binary file, starts with 0x7F454C (ELF)"));
-                    highestSeverity = Severity.HIGHEST;
+                    checkResults.add(scannerResult(context, jarEntry.getName(), "disguised linux executable binary file, starts with 0x7F454C (ELF)"));
                 }
             }
         } catch (Exception ex) {
-            checkResults.add(new ExceptionCheckResult(Severity.HIGHEST, "Scanner", name, "Crashes while scanning with " + ex.getClass().getName() + ": " + ex.getMessage(), ex));
+            CheckResult result = new CheckResult.Exception(Severity.HIGHEST, "Scanner", version(), name, "Crashes while scanning with " + ex.getClass().getName() + ": " + ex.getMessage(), ex);
+            context.updatedHighestSeverity(result);
+            checkResults.add(result);
         }
-        return new ScanResult(highestSeverity, checkResults);
+        return new ScanResult(context.getHighestSeverity(), checkResults);
     }
 
-    public Set<CheckResult> scanClazz(byte[] bytes, String name) {
+    private CheckResult scannerResult(CheckContext context, String className, String message) {
+        CheckResult result = new CheckResult.Simple(Severity.HIGHEST, "Scanner", version(), className, message);
+        context.updatedHighestSeverity(result);
+        return result;
+    }
+
+    public Set<CheckResult> scanClazz(CheckContext context, byte[] bytes, String name) {
         ClassReader cr = new ClassReader(bytes);
         ClassNode cn = new ClassNode();
         try {
             cr.accept(cn, ClassReader.EXPAND_FRAMES);
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Failed to read class " + name + " with ASM", e);
         }
-        return scan(cn);
+
+        context.setClassNode(cn);
+        Set<CheckResult> result = scan(context, cn);
+        context.setClassNode(null);
+        return result;
     }
 
-    private Set<CheckResult> scan(ClassNode classNode) {
-        Set<CheckResult> checkResults = new LinkedHashSet<>();
-        for (ClassCheck classCheck : classChecks) {
-            ClassCheckResult result = classCheck.check(classNode);
-            if (result != null) {
-                checkResults.add(new ClassCheckResult(result.severity(), classCheck.name(), classNode, result.message()));
-            }
+    private Set<CheckResult> scan(CheckContext context, ClassNode cn) {
+        Set<CheckResult> checkResults = new LinkedHashSet<>(Checks.checkClass(context, cn));
+        for (MethodNode method : cn.methods) {
+            context.setMethodNode(method);
+            checkResults.addAll(scan(context, method));
+            context.setMethodNode(null);
         }
-        for (MethodNode method : classNode.methods) {
-            checkResults.addAll(scan(method, classNode));
+        for (FieldNode field : cn.fields) {
+            context.setFieldNode(field);
+            checkResults.addAll(Checks.checkField(context, field));
+            context.setFieldNode(null);
         }
         return checkResults;
     }
 
-    private Set<CheckResult> scan(MethodNode methodNode, ClassNode classNode) {
-        Set<CheckResult> checkResults = new LinkedHashSet<>();
+    private Set<CheckResult> scan(CheckContext context, MethodNode methodNode) {
+        Set<CheckResult> checkResults = new LinkedHashSet<>(Checks.checkMethod(context, methodNode));
         for (AbstractInsnNode instruction : methodNode.instructions) {
             if (instruction instanceof MethodInsnNode methodInsnNode) {
-                for (MethodCheck methodCheck : methodChecks) {
-                    MethodCheckResult result = methodCheck.check(methodInsnNode, methodNode, classNode);
-                    if (result != null) {
-                        checkResults.add(new MethodCheckResult(result.severity(), methodCheck.name(), methodNode, classNode, result.message()));
-                    }
-                }
+                context.setMethodCallNode(methodInsnNode);
+                checkResults.addAll(Checks.checkMethodCall(context, methodInsnNode));
+                context.setMethodCallNode(null);
             }
         }
         return checkResults;
-    }
-
-    /**
-     * Checks the super classes or class annotations to figure out the platform, or null if nothing can be found
-     */
-    private Platform checkClassForPlatform(ClassNode classNode) {
-        if (classNode.superName == null) {
-            return null;
-        }
-        return switch (classNode.superName) {
-            case "org/bukkit/plugin/java/JavaPlugin" -> Platform.PAPER;
-            case "net/md_5/bungee/api/plugin/Plugin" -> Platform.WATERFALL;
-            default -> {
-                if (classNode.visibleAnnotations != null) {
-                    for (AnnotationNode ann : classNode.visibleAnnotations) {
-                        if (ann.desc.equals("Lcom/velocitypowered/api/plugin/Plugin;")) {
-                            yield Platform.VELOCITY;
-                        }
-                    }
-                }
-                yield null;
-            }
-        };
     }
 
     /**
@@ -167,6 +106,6 @@ public class HangarJarScanner {
      * @return the internal version of the scanner
      */
     public int version() {
-        return VERSION;
+        return 4;
     }
 }

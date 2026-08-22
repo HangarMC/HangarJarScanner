@@ -1,7 +1,8 @@
 package io.papermc.hangar.scanner.model;
 
-import io.papermc.hangar.scanner.check.Check.CheckResult;
-import java.util.List;
+import io.papermc.hangar.scanner.check.CheckResult;
 
-public record ScanResult(Severity highestSeverity, List<CheckResult> results) {
+import java.util.Set;
+
+public record ScanResult(Severity highestSeverity, Set<CheckResult> results) {
 }

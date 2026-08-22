@@ -1,15 +1,16 @@
-package io.papermc.hangar.scanner.check.classfile;
+package io.papermc.hangar.scanner.check.checks;
 
-import io.papermc.hangar.scanner.check.ClassCheck;
+import io.papermc.hangar.scanner.check.Check;
+import io.papermc.hangar.scanner.check.CheckContext;
+import io.papermc.hangar.scanner.check.CheckResult;
 import io.papermc.hangar.scanner.model.Severity;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public class ByteArrayLiteralCheck implements ClassCheck {
+public class ByteArrayLiteralCheck implements Check {
 
     @Override
     public String name() {
@@ -17,11 +18,14 @@ public class ByteArrayLiteralCheck implements ClassCheck {
     }
 
     @Override
-    public ClassCheckResult check(ClassNode classNode) {
-        for (MethodNode methodNode : classNode.methods) {
-            if (containsByteArrayLiteral(methodNode)) {
-                return new ClassCheckResult(Severity.MEDIUM, name(), classNode, "creates byte array literal in " + methodNode.name);
-            }
+    public int updatedAt() {
+        return 2;
+    }
+
+    @Override
+    public CheckResult.Method checkMethod(CheckContext context, MethodNode methodNode) {
+        if (containsByteArrayLiteral(methodNode)) {
+            return methodResult(context, Severity.MEDIUM, "creates byte array literal, an indicator for string encryption");
         }
         return null;
     }
@@ -81,10 +85,5 @@ public class ByteArrayLiteralCheck implements ClassCheck {
                 || opcode == Opcodes.BIPUSH
                 || opcode == Opcodes.SIPUSH
                 || instruction instanceof LdcInsnNode ldcInsnNode && ldcInsnNode.cst instanceof Integer;
-    }
-
-    @Override
-    public int updatedAt() {
-        return 2;
     }
 }
