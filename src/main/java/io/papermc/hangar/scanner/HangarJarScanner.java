@@ -106,6 +106,6 @@ public class HangarJarScanner {
      * @return the internal version of the scanner
      */
     public int version() {
-        return 4;
+        return 5;
     }
 }
