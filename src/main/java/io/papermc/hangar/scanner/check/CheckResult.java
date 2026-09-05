@@ -59,7 +59,7 @@ public sealed interface CheckResult {
     record MethodCall(Severity severity, String name, int updatedAt, ClassNode classNode, MethodNode methodNode, MethodInsnNode methodInsnNode, String message) implements CheckResult {
         @Override
         public String location() {
-            return methodInsnNode.name + "(" + methodInsnNode.desc + ")" + " @ " + classNode.name  + "#" + methodNode.name + "(" + methodNode.desc + ")";
+            return methodInsnNode.owner + "#" + methodInsnNode.name + "(" + methodInsnNode.desc + ")" + " @ " + classNode.name  + "#" + methodNode.name + "(" + methodNode.desc + ")";
         }
     }
 }
